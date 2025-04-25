@@ -7,7 +7,7 @@ import time
 
 app = Flask(__name__)
 
-# Sessão global para navegador
+# Sessão global para o navegador
 class BrowserSession:
     driver = None
 
@@ -18,10 +18,14 @@ session = BrowserSession()
 def start_browser():
     def run_browser():
         options = webdriver.ChromeOptions()
-        options.binary_location = "/usr/bin/chromium-browser"  # Caminho para o Chromium
+        options.binary_location = "/usr/bin/chromium-browser"  # Caminho para Chromium no Linux
+
+        # Configurações para evitar erros em Linux
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
         options.add_argument("--start-maximized")
-        # Ativar o modo headless se não precisar de interface gráfica
-        # options.add_argument("--headless")
+        # options.add_argument("--headless")  # Ative se quiser sem interface gráfica
 
         session.driver = webdriver.Chrome(options=options)
         session.driver.get("https://www.youtube.com")
@@ -46,21 +50,19 @@ def command():
         if action == "search":
             if not query:
                 return jsonify({"status": "error", "message": "Query é necessária para o comando 'search'."})
-            
-            # Aguarda o carregamento e faz a busca
+
             time.sleep(2)
             search_input = driver.find_element(By.NAME, "search_query")
             search_input.clear()
             search_input.send_keys(query)
             search_input.send_keys(Keys.ENTER)
             time.sleep(3)
-            # Clica no primeiro vídeo
             video = driver.find_element(By.ID, "video-title")
             video.click()
 
         elif action == "play" or action == "pause":
             body = driver.find_element(By.TAG_NAME, 'body')
-            body.send_keys('k')  # k = play/pause
+            body.send_keys('k')
 
         elif action == "volume_up":
             body = driver.find_element(By.TAG_NAME, 'body')
@@ -88,4 +90,4 @@ def close_browser():
     return jsonify({"status": "error", "message": "Navegador não estava aberto."})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False) 
+    app.run(host='0.0.0.0', port=5000, debug=False)
